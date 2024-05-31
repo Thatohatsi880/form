@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react'; // Import useState
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-// import axios from 'axios';
+import axios from 'axios';
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Name is required'),
@@ -17,6 +17,10 @@ const validationSchema = Yup.object({
 });
 
 const SubmitForm = () => {
+  const [loading, setLoading] = useState(false); // State to track loading status
+  const [error, setError] = useState(null); // State to track errors
+  const [success, setSuccess] = useState(false); // State to track success status
+
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -26,19 +30,25 @@ const SubmitForm = () => {
     validationSchema: validationSchema,
     onSubmit: async (values, { resetForm }) => {
       try {
-        // const response = await axios.post('YOUR_API_ENDPOINT', values);
-        // console.log(response.data);
-        console.log(values); // For debugging purposes
+        setLoading(true); // Set loading state to true while fetching data
+        setError(null); // Reset error state before API call
+        setSuccess(false); // Reset success state before API call
+        // Make an API call using Axios
+        const response = await axios.post('https://jsonplaceholder.typicode.com/posts', values);
+        console.log(response.data); // Log response data
         resetForm(); // Reset the form to blank state
+        setSuccess(true); // Set success state to true on successful submission
       } catch (error) {
-        console.error(error);
+        setError(error); // Set error state if API call fails
+      } finally {
+        setLoading(false); // Set loading state to false after API call is completed
       }
     },
   });
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-darkgray">
-      <div className="bg-white p-8 rounded shadow-md border border-lightgray w-full max-w-md">
+      <div className="bg-white p-8 rounded shadow-md w-full max-w-md" style={{ border: 'none' }}> {/* Set border to none */}
         <h1 className="text-2xl font-bold mb-6 text-center">Submit Form</h1>
         <form onSubmit={formik.handleSubmit}>
           <div className="mb-4">
@@ -90,8 +100,12 @@ const SubmitForm = () => {
               <div className="text-yellow-500 text-sm mt-1">Password strength: Weak</div>
             ) : null}
           </div>
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded w-full">Submit</button>
+          <button type="submit" className="bg-blue-500 text-white p-2 rounded w-full">
+            {loading ? 'Submitting...' : 'Submit'} {/* Show 'Submitting...' while loading */}
+          </button>
         </form>
+        {error && <div className="text-red-500 text-sm mt-2">{error.message}</div>} {/* Display error message if error occurs */}
+        {success && <div className="text-green-500 text-sm mt-2">Form submitted successfully!</div>} {/* Display success message if form is submitted */}
       </div>
     </div>
   );
